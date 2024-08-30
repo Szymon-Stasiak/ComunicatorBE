@@ -41,13 +41,13 @@ public class DataBaseVerticle extends AbstractVerticle {
 
         eventBus.consumer("deleteUser", message -> {
             String id = (String) message.body();
-            delete(id).onComplete(res -> {
-                if (res.succeeded()) {
-                    message.reply(res.result());
-                } else {
-                    message.fail(500, res.cause().getMessage());
-                }
-            });
+                delete(id).onComplete(res -> {
+                    if (res.succeeded()) {
+                        message.reply(res.result());
+                    } else {
+                        message.fail(500, res.cause().getMessage());
+                    }
+                });
         });
 
         eventBus.consumer("findUser", message -> {
@@ -78,11 +78,22 @@ public class DataBaseVerticle extends AbstractVerticle {
 
     private Future<String> save(JsonObject obj) {
         Promise<String> promise = Promise.promise();
-        mongoClient.save(DBName, obj, res -> {
+        findUserByEmail(obj.getString("email")).onComplete(res -> {
             if (res.succeeded()) {
-                String id = res.result();
-                Logger.info("User saved with id: " + id);
-                promise.complete(id);
+                if (res.result() != null) {
+                    Logger.info("User with email: " + obj.getString("email") + " already exists");
+                    promise.fail("User with email: " + obj.getString("email") + " already exists");
+                } else {
+                    mongoClient.insert(DBName, obj, res2 -> {
+                        if (res2.succeeded()) {
+                            Logger.info("User saved with id: " + obj.getString("_id"));
+                            promise.complete(obj.getString("_id"));
+                        } else {
+                            Logger.error("Failed to save user", res2.cause());
+                            promise.fail(res2.cause());
+                        }
+                    });
+                }
             } else {
                 Logger.error("Failed to save user", res.cause());
                 promise.fail(res.cause());
@@ -93,10 +104,16 @@ public class DataBaseVerticle extends AbstractVerticle {
 
     private Future<JsonObject> delete(String id) {
         Promise<JsonObject> promise = Promise.promise();
-        mongoClient.removeDocument(DBName, new JsonObject().put("_id", id), res -> {
+        mongoClient.findOneAndDelete(DBName, new JsonObject().put("_id", id), res -> {
             if (res.succeeded()) {
-                Logger.info("User deleted with id: " + id);
-                promise.complete();
+                if (res.result() == null) {
+                    Logger.info("User not found");
+                    promise.fail("User not found");
+                } else {
+                    JsonObject user = res.result();
+                    Logger.info("User deleted with id: " + id);
+                    promise.complete(user);
+                }
             } else {
                 Logger.error("Failed to delete user", res.cause());
                 promise.fail(res.cause());
@@ -110,7 +127,30 @@ public class DataBaseVerticle extends AbstractVerticle {
         mongoClient.findOne(DBName, new JsonObject().put("_id", id), new JsonObject(), res -> {
             if (res.succeeded()) {
                 JsonObject user = res.result();
-                Logger.info("User found with id: " + id);
+                if (user == null) {
+                    Logger.info("User not found");
+                } else {
+                    Logger.info("User found with id: " + id);
+                }
+                promise.complete(user);
+            } else {
+                Logger.error("Failed to find user", res.cause());
+                promise.fail(res.cause());
+            }
+        });
+        return promise.future();
+    }
+
+    private Future<JsonObject> findUserByEmail(String email) {
+        Promise<JsonObject> promise = Promise.promise();
+        mongoClient.findOne(DBName, new JsonObject().put("email", email), new JsonObject(), res -> {
+            if (res.succeeded()) {
+                JsonObject user = res.result();
+                if (user == null) {
+                    Logger.info("User not found");
+                } else {
+                    Logger.info("User found with email: " + email);
+                }
                 promise.complete(user);
             } else {
                 Logger.error("Failed to find user", res.cause());
@@ -122,6 +162,10 @@ public class DataBaseVerticle extends AbstractVerticle {
 
     private Future<JsonObject> update(String id, JsonObject obj) {
         Promise<JsonObject> promise = Promise.promise();
+        if (find(id).result() == null) {
+            promise.fail("User not found");
+            return promise.future();
+        }
         mongoClient.updateCollection(DBName, new JsonObject().put("_id", id), new JsonObject().put("$set", obj), res -> {
             if (res.succeeded()) {
                 Logger.info("User updated with id: " + id);
