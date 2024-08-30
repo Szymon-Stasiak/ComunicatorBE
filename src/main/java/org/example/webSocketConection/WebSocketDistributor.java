@@ -17,7 +17,7 @@ public class WebSocketDistributor extends AbstractVerticle {
 
     @Override
     public  void start() {
-        List<WebSocketWorkerVerticle.WebSocketClient> connectedClients = new ArrayList<>();
+       /* List<WebSocketWorkerVerticle.WebSocketClient> connectedClients = new ArrayList<>();
 
         vertx.createHttpServer().webSocketHandler(webSocket -> {
             WebSocketWorkerVerticle.WebSocketClient client = new WebSocketWorkerVerticle.WebSocketClient(webSocket);
@@ -44,6 +44,6 @@ public class WebSocketDistributor extends AbstractVerticle {
             } else {
                 System.out.println("Failed to bind on port " + port);
             }
-        });
-
+        });*/
+    }
 }

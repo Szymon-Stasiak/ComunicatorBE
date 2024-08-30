@@ -20,4 +20,6 @@ public class Logger {
     }
 
 
+    public static void error(String failedToSaveUser, Throwable cause) {
+    }
 }
