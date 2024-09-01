@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 public class Logger {
 
     private static final org.apache.logging.log4j.Logger logger = LogManager.getLogger();
-
     public static org.apache.logging.log4j.Logger getLogger() {
         return logger;
     }
@@ -18,8 +17,5 @@ public class Logger {
     public static void error(String message){
         logger.error(message);
     }
-
-
-    public static void error(String failedToSaveUser, Throwable cause) {
-    }
+    public static void verbose(String message){logger.trace(message);}
 }
