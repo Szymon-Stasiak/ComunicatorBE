@@ -3,6 +3,11 @@ package org.example.API;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.authentication.Credentials;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
+import io.vertx.ext.auth.oauth2.OAuth2FlowType;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
+import io.vertx.ext.auth.oauth2.Oauth2Credentials;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -11,6 +16,17 @@ import org.example.loger.Logger;
 
 public class APIServer extends AbstractVerticle {
 
+    OAuth2Auth googleAuth = OAuth2Auth.create(vertx,
+            new OAuth2Options()
+                    .setFlow(OAuth2FlowType.AUTH_CODE)
+                    .setClientID("your-client-id")
+    );
+
+    OAuth2Auth facabookAuth = OAuth2Auth.create(vertx,
+            new OAuth2Options()
+                    .setFlow(OAuth2FlowType.AUTH_CODE)
+                    .setClientID("your-client-id")
+    );
 
 
     @Override
@@ -21,6 +37,8 @@ public class APIServer extends AbstractVerticle {
         router.route().handler(BodyHandler.create());
         router.post("/api/register").handler(this::registerUser);
         router.post("/api/login").handler(this::loginUser);
+        router.post("/callback/google").handler(this::googleAuth);
+        router.post("/callback/facebook").handler(this::facebookAuth);
 
         vertx.createHttpServer().requestHandler(router).listen(8080, result -> {
             if (result.succeeded()) {
@@ -75,6 +93,47 @@ public class APIServer extends AbstractVerticle {
         });
     }
 
+    private void googleAuth(RoutingContext routingContext){
+        String code = routingContext.request().getParam("code");
+
+        Oauth2Credentials credentials = new Oauth2Credentials().setCode(code);
+
+        googleAuth.authenticate(credentials, res -> {
+            if (res.succeeded()) {
+                Logger.info("User authenticated with google");
+
+                //TODO decide what should be returned and how identify user
+
+                JsonObject user = (JsonObject) res.result();
+                routingContext.response().setStatusCode(200).end(user.encode());
+            } else {
+                Logger.error("Failed to authenticate user with google", res.cause());
+                routingContext.response().setStatusCode(500).end("Internal server error");
+            }
+
+        });
+    };
+
+    private void facebookAuth(RoutingContext routingContext){
+        String code = routingContext.request().getParam("code");
+
+        Oauth2Credentials credentials = new Oauth2Credentials().setCode(code);
+
+        facabookAuth.authenticate(credentials, res -> {
+            if (res.succeeded()) {
+                Logger.info("User authenticated with facebook");
+
+                //TODO decide what should be returned and how identify user
+
+                JsonObject user = (JsonObject) res.result();
+                routingContext.response().setStatusCode(200).end(user.encode());
+            } else {
+                Logger.error("Failed to authenticate user with facebook", res.cause());
+                routingContext.response().setStatusCode(500).end("Internal server error");
+            }
+
+        });
+    }
 
 }
 

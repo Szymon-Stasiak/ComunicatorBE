@@ -19,6 +19,4 @@ public class Main {
         vertx.deployVerticle(new DataBaseVerticle(vertx,"TESTDB", "mongodb://stszymek:ADMIN@chatapp-shard-00-00.j3wy9.mongodb.net:27017,chatapp-shard-00-01.j3wy9.mongodb.net:27017,chatapp-shard-00-02.j3wy9.mongodb.net:27017/?ssl=true&replicaSet=atlas-mwj2tr-shard-0&authSource=admin&retryWrites=true&w=majority&appName=ChatApp"));
         vertx.deployVerticle(new APIServer());
     }
-
-
 }
