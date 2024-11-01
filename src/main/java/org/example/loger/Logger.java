@@ -18,8 +18,7 @@ public class Logger {
     public static void error(String message){
         logger.error(message);
     }
-
-
+    public static void verbose(String message){logger.trace(message);}
     public static void error(String failedToSaveUser, Throwable cause) {
     }
 }

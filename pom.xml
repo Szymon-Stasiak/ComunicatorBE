@@ -45,6 +45,11 @@
             <artifactId>vertx-mongo-client</artifactId>
             <version>4.5.8</version>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-auth-oauth2</artifactId>
+            <version>4.5.8</version>
+        </dependency>
     </dependencies>
 
 </project>
